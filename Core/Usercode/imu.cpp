@@ -6,6 +6,7 @@
 
 #include <ctgmath>
 #include "bmi088.h"
+#include "tim.h"
 
 void IMU::acc_calculate()
 {
@@ -79,4 +80,70 @@ void IMU::update()
     gyro_calculate();
 
     sensorDataTransform();
+
+    temp_control_.handle();
+}
+
+void IMU::gyro_calibrate(uint32_t time_ms)
+{
+    float raw_data_sum[3] = {0.0f, 0.0f, 0.0f};
+
+    uint32_t samples = 0;
+
+    // 求和
+    uint32_t start_tick = HAL_GetTick();
+    do
+    {
+        samples++;
+        gyro_calculate();
+        for (uint8_t i = 0; i < 3; i++)
+            raw_data_sum[i] += raw_data_.gyro[i];
+        HAL_Delay(1);
+    }
+    while (HAL_GetTick() < start_tick + time_ms);
+
+    for (uint8_t i = 0; i < 3; i++)
+    {
+        float sum = 0.0f;
+        for (uint8_t j = 0; j < 3; j++)
+            sum += R_imu_[i][j] * raw_data_sum[j];
+        gyro_bias_[i] = sum / static_cast<float>(samples);
+    }
+}
+
+void IMU::TempControl::read_temperature()
+{
+    uint8_t temp_data[2];
+
+    bmi088_accel_read_reg(0x22, temp_data, 2);
+
+    // 拼接 11 位温度数据
+    int16_t temp_raw = ((uint16_t)temp_data[0] << 3) | (temp_data[1] >> 5);
+
+    // 转换为 11 位有符号数
+    if (temp_raw & 0x0400)
+        temp_raw -= 2048;
+
+    temperature_ = 23.0f + temp_raw * 0.125f;
+}
+
+void IMU::TempControl::temp_control(uint16_t time_ms)
+{
+    uint32_t tick = HAL_GetTick();
+    uint32_t now;
+    do
+    {
+        handle();
+        HAL_Delay(1);
+        now = HAL_GetTick();
+    }
+    while (now < tick + time_ms);
+}
+
+void IMU::TempControl::handle()
+{
+    read_temperature();
+    uint16_t pwm = static_cast<uint16_t>(std::max(std::round(pid_.calc(temp_ref_, temperature_)), 0.0f));
+    output_ = pwm;
+    htim10.Instance->CCR1 = pwm;
 }

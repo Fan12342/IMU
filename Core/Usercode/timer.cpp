@@ -23,5 +23,9 @@ void imu_init()
 {
     imu.acc_init();
     imu.gyro_init();
+
+    imu.temp_control_.temp_control(500);
+
+    imu.gyro_calibrate(500);
 }
 }

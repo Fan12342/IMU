@@ -5,10 +5,26 @@
 #ifndef IMA_IMU_H
 #define IMA_IMU_H
 #include "bmi088.h"
+#include "pid.h"
 
 class IMU
 {
 public:
+    class TempControl
+    {
+    public:
+        float temperature_ = 0;
+        float temp_ref_ = 29.0f;
+        PID pid_ = PID(4000, 0, 0, 0, 999, 0);
+        uint16_t output_;
+
+        void read_temperature();
+        void temp_control(uint16_t time_ms);
+        void handle();
+
+    private:
+    };
+
     const float R_imu_[3][3] = {
         {-1.0f, 0.0f, 0.0f},
         {0.0f, 1.0f, 0.0f},
@@ -33,6 +49,8 @@ public:
     // 加速度计的比例修正系数
     float accel_sen_ = 1.0f;
 
+    TempControl temp_control_;
+
     void acc_calculate();
     void gyro_calculate();
 
@@ -43,8 +61,9 @@ public:
 
     void update();
 
-    // private:
+    void gyro_calibrate(uint32_t time_ms);
 
+    // private:
 };
 
 #endif //IMA_IMU_H
