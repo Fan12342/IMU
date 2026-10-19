@@ -55,7 +55,7 @@ void IMU::gyro_init()
 {
     uint8_t raw_range;
     // 1. 设置/读取gyro0x0F寄存器中的量程range参数，并换算为量程系数
-    bmi088_accel_read_reg(0x0F, &raw_range, 1);
+    bmi088_gyro_read_reg(0x0F, &raw_range, 1);
     gyro_data_to_dps_ = 2000.0f / pow(2, raw_range & 0x07) / 32768.0f;
 }
 
