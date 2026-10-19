@@ -63,10 +63,13 @@ void IMU::sensorDataTransform()
 {
     for (uint8_t i = 0; i < 3; i++)
     {
-        gyro_sensor_[i] = raw_data_.gyro[0] * R_imu_[i][0] + raw_data_.gyro[1] * R_imu_[i][1] + raw_data_.gyro[2] *
-            R_imu_[i][2] - gyro_bias_[i];
-        accel_sensor_[i] = accel_sen_ * (raw_data_.accel[0] * R_imu_[i][0] + raw_data_.accel[1] * R_imu_[i][1] +
-            raw_data_.accel[2] * R_imu_[i][2]) - accel_bias_[i];
+        gyro_sensor_[i] = -gyro_bias_[i];
+        for (uint8_t j = 0; j < 3; j++)
+            gyro_sensor_[i] += R_imu_[i][j] * raw_data_.gyro[j];
+
+        accel_sensor_[i] = -accel_bias_[i];
+        for (uint8_t j = 0; j < 3; j++)
+            accel_sensor_[i] += R_imu_[i][j] * raw_data_.accel[j];
     }
 }
 
