@@ -49,7 +49,7 @@ void IMU::acc_init()
     uint8_t raw_range;
     // 1. 设置/读取acc0x41寄存器中的量程range参数，并换算为量程系数
     bmi088_accel_read_reg(0x41, &raw_range, 1);
-    acc_data_to_mg_ = 1000.0f * 1.5f * pow(2, raw_range + 1) / 32768.0f;
+    acc_data_to_mg_ = 1000.0f * 3.0f * static_cast<float>(1U << (raw_range & 0x03)) / 32768.0f;
 }
 
 void IMU::gyro_init()
@@ -57,7 +57,7 @@ void IMU::gyro_init()
     uint8_t raw_range;
     // 1. 设置/读取gyro0x0F寄存器中的量程range参数，并换算为量程系数
     bmi088_gyro_read_reg(0x0F, &raw_range, 1);
-    gyro_data_to_dps_ = 2000.0f / pow(2, raw_range & 0x07) / 32768.0f;
+    gyro_data_to_dps_ = 2000.0f / static_cast<float>(1U << (raw_range & 0x07)) / 32768.0f;
 }
 
 void IMU::sensorDataTransform()
