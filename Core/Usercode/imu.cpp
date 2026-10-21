@@ -187,6 +187,43 @@ void IMU::attitude_update(float dt_s)
     float gy = gyro_filter_[1] * DEG_TO_RAD;
     float gz = gyro_filter_[2] * DEG_TO_RAD;
 
+    float ax = accel_filter_[0];
+    float ay = accel_filter_[1];
+    float az = accel_filter_[2];
+
+    float acc_norm = std::sqrt(ax * ax + ay * ay + az * az);
+
+    // 仅在加速度模长接近重力时使用加速度校正
+    if (acc_norm > 500.0f && acc_norm < 1500.0f)
+    {
+        ax /= acc_norm;
+        ay /= acc_norm;
+        az /= acc_norm;
+
+        // 根据四元数估计重力方向
+        float vx = 2.0f * (q_[1] * q_[3] - q_[0] * q_[2]);
+        float vy = 2.0f * (q_[0] * q_[1] + q_[2] * q_[3]);
+        float vz = 1.0f - 2.0f * (q_[1] * q_[1] + q_[2] * q_[2]);
+
+        // 测量方向 × 估计方向
+        float ex = ay * vz - az * vy;
+        float ey = az * vx - ax * vz;
+        float ez = ax * vy - ay * vx;
+
+        // Mahony 比例反馈
+        gx += mahony_kp_ * ex;
+        gy += mahony_kp_ * ey;
+        gz += mahony_kp_ * ez;
+
+        // Mahony 积分反馈
+        ex_sum += ex * dt_s;
+        ey_sum += ey * dt_s;
+        ez_sum += ez * dt_s;
+        gx += mahony_ki_ * ex_sum;
+        gy += mahony_ki_ * ey_sum;
+        gz += mahony_ki_ * ez_sum;
+    }
+
     // 5. 四元数微分方程
     float q_dot0 = 0.5f * (-q_[1] * gx - q_[2] * gy - q_[3] * gz);
     float q_dot1 = 0.5f * (q_[0] * gx + q_[2] * gz - q_[3] * gy);

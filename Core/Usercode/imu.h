@@ -64,6 +64,12 @@ public:
     float pitch_ = 0.0f;
     float yaw_   = 0.0f;
 
+    // Mahony 比例校正系数
+    float mahony_kp_ = 1.0f;
+    float mahony_ki_ = 0.0f;
+
+    float ex_sum = 0.0f, ey_sum = 0.0f, ez_sum = 0.0f;
+
     // 姿态解算
     void attitude_update(float dt_s);
 
