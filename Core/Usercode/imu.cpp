@@ -74,12 +74,32 @@ void IMU::sensorDataTransform()
     }
 }
 
+void IMU::dataFilter()
+{
+    if (is_first_)
+    {
+        is_first_ = false;
+        for (uint8_t i = 0; i < 3; i++)
+        {
+            gyro_filter_[i] = gyro_sensor_[i];
+            accel_filter_[i] = accel_sensor_[i];
+        }
+        return;
+    }
+    for (uint8_t i = 0; i < 3; i++)
+    {
+        gyro_filter_[i] = gyro_filter_[i] * (1 - filter_k_) + gyro_sensor_[i] * filter_k_;
+        accel_filter_[i] = accel_filter_[i] * (1 - filter_k_) + accel_sensor_[i] * filter_k_;
+    }
+}
+
 void IMU::update(float dt_s)
 {
     acc_calculate();
     gyro_calculate();
 
     sensorDataTransform();
+    dataFilter();
 
     attitude_update(dt_s);
 
@@ -163,9 +183,9 @@ void IMU::attitude_update(float dt_s)
     // 1. 陀螺仪：°/s 转换为 rad/s
     constexpr float DEG_TO_RAD = 3.14159265358979323846f / 180.0f;
 
-    float gx = gyro_sensor_[0] * DEG_TO_RAD;
-    float gy = gyro_sensor_[1] * DEG_TO_RAD;
-    float gz = gyro_sensor_[2] * DEG_TO_RAD;
+    float gx = gyro_filter_[0] * DEG_TO_RAD;
+    float gy = gyro_filter_[1] * DEG_TO_RAD;
+    float gz = gyro_filter_[2] * DEG_TO_RAD;
 
     // 5. 四元数微分方程
     float q_dot0 = 0.5f * (-q_[1] * gx - q_[2] * gy - q_[3] * gz);

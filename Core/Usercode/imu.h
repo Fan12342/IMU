@@ -42,6 +42,10 @@ public:
 
     // 机体坐标系数据
     float gyro_sensor_[3], accel_sensor_[3];
+    float gyro_filter_[3], accel_filter_[3];
+    bool is_first_ = true;
+
+    float filter_k_ = 0.5f;
 
     float gyro_bias_[3] = {0.0f, 0.0f, 0.0f};
     float accel_bias_[3] = {0.0f, 0.0f, 0.0f};
@@ -70,6 +74,8 @@ public:
     void gyro_init();
 
     void sensorDataTransform();
+
+    void dataFilter();
 
     void update(float dt_s);
 
