@@ -81,7 +81,15 @@ void IMU::update()
 
     sensorDataTransform();
 
-    temp_control_.handle();
+
+    static uint32_t last_temp_tick = 0;
+    uint32_t now = HAL_GetTick();
+
+    if ((uint32_t)(now - last_temp_tick) >= 1300U)
+    {
+        last_temp_tick = now;
+        temp_control_.read_temperature();
+    }
 }
 
 void IMU::gyro_calibrate(uint32_t time_ms)
