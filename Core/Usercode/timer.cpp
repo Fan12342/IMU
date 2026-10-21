@@ -14,7 +14,27 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
     if (htim->Instance == TIM6)
     {
-        imu.update();
+        static uint32_t last_tick = 0;
+        uint32_t now = HAL_GetTick();
+
+        if (last_tick == 0)
+        {
+            last_tick = now;
+            return;
+        }
+
+        uint32_t elapsed = now - last_tick;
+        last_tick = now;
+
+        if (elapsed >= 1U)
+        {
+            last_tick = now;
+
+            // 实际时间间隔，单位为秒
+            float dt_s = elapsed * 0.001f;
+
+            imu.update(dt_s);
+        }
     }
 }
 

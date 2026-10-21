@@ -74,13 +74,14 @@ void IMU::sensorDataTransform()
     }
 }
 
-void IMU::update()
+void IMU::update(float dt_s)
 {
     acc_calculate();
     gyro_calculate();
 
     sensorDataTransform();
 
+    attitude_update(dt_s);
 
     static uint32_t last_temp_tick = 0;
     uint32_t now = HAL_GetTick();
@@ -154,4 +155,61 @@ void IMU::TempControl::handle()
     uint16_t pwm = static_cast<uint16_t>(std::max(std::round(pid_.calc(temp_ref_, temperature_)), 0.0f));
     output_ = pwm;
     htim10.Instance->CCR1 = pwm;
+}
+
+// Mahony 姿态融合
+void IMU::attitude_update(float dt_s)
+{
+    // 1. 陀螺仪：°/s 转换为 rad/s
+    constexpr float DEG_TO_RAD = 3.14159265358979323846f / 180.0f;
+
+    float gx = gyro_sensor_[0] * DEG_TO_RAD;
+    float gy = gyro_sensor_[1] * DEG_TO_RAD;
+    float gz = gyro_sensor_[2] * DEG_TO_RAD;
+
+    // 5. 四元数微分方程
+    float q_dot0 = 0.5f * (-q_[1] * gx - q_[2] * gy - q_[3] * gz);
+    float q_dot1 = 0.5f * (q_[0] * gx + q_[2] * gz - q_[3] * gy);
+    float q_dot2 = 0.5f * (q_[0] * gy - q_[1] * gz + q_[3] * gx);
+    float q_dot3 = 0.5f * (q_[0] * gz + q_[1] * gy - q_[2] * gx);
+
+    // 6. 积分更新
+    q_[0] += q_dot0 * dt_s;
+    q_[1] += q_dot1 * dt_s;
+    q_[2] += q_dot2 * dt_s;
+    q_[3] += q_dot3 * dt_s;
+
+    // 7. 四元数归一化
+    float q_norm = std::sqrt(q_[0] * q_[0] + q_[1] * q_[1] + q_[2] * q_[2] + q_[3] * q_[3]);
+
+    if (q_norm < 1e-6f)
+        return;
+
+    q_[0] /= q_norm;
+    q_[1] /= q_norm;
+    q_[2] /= q_norm;
+    q_[3] /= q_norm;
+
+    // 8. 四元数转欧拉角，采用 Z-Y-X 顺序
+    constexpr float RAD_TO_DEG = 180.0f / 3.14159265358979323846f;
+
+    float sin_pitch = 2.0f * (q_[0] * q_[2] - q_[3] * q_[1]);
+
+    // 防止浮点误差使 asin 输入超出 [-1, 1]
+    if (sin_pitch > 1.0f)
+        sin_pitch = 1.0f;
+    else if (sin_pitch < -1.0f)
+        sin_pitch = -1.0f;
+
+    roll_ = std::atan2(
+        2.0f * (q_[0] * q_[1] + q_[2] * q_[3]),
+        1.0f - 2.0f * (q_[1] * q_[1] + q_[2] * q_[2])
+    ) * RAD_TO_DEG;
+
+    pitch_ = std::asin(sin_pitch) * RAD_TO_DEG;
+
+    yaw_ = std::atan2(
+        2.0f * (q_[0] * q_[3] + q_[1] * q_[2]),
+        1.0f - 2.0f * (q_[2] * q_[2] + q_[3] * q_[3])
+    ) * RAD_TO_DEG;
 }

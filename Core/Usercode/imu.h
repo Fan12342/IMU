@@ -51,6 +51,18 @@ public:
 
     TempControl temp_control_;
 
+
+    // 姿态四元数，顺序为 w、x、y、z
+    float q_[4] = {1.0f, 0.0f, 0.0f, 0.0f};
+
+    // 姿态角，单位：度
+    float roll_  = 0.0f;
+    float pitch_ = 0.0f;
+    float yaw_   = 0.0f;
+
+    // 姿态解算
+    void attitude_update(float dt_s);
+
     void acc_calculate();
     void gyro_calculate();
 
@@ -59,7 +71,7 @@ public:
 
     void sensorDataTransform();
 
-    void update();
+    void update(float dt_s);
 
     void gyro_calibrate(uint32_t time_ms);
 
