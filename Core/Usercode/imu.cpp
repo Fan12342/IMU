@@ -4,7 +4,7 @@
 
 #include "imu.h"
 
-#include <ctgmath>
+#include <cmath>
 #include "bmi088.h"
 #include "tim.h"
 
@@ -172,7 +172,7 @@ void IMU::TempControl::temp_control(uint16_t time_ms)
 void IMU::TempControl::handle()
 {
     read_temperature();
-    uint16_t pwm = static_cast<uint16_t>(std::max(std::round(pid_.calc(temp_ref_, temperature_)), 0.0f));
+    uint16_t pwm = static_cast<uint16_t>(std::fmax(std::round(pid_.calc(temp_ref_, temperature_)), 0.0f));
     output_ = pwm;
     htim10.Instance->CCR1 = pwm;
 }
