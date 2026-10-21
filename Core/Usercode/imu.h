@@ -14,7 +14,7 @@ public:
     {
     public:
         float temperature_ = 0;
-        float temp_ref_ = 29.0f;
+        float temp_ref_ = 27.0f;
         PID pid_ = PID(4000, 0, 0, 0, 999, 0);
         uint16_t output_;
 
@@ -27,8 +27,8 @@ public:
 
     const float R_imu_[3][3] = {
         {-1.0f, 0.0f, 0.0f},
-        {0.0f, 1.0f, 0.0f},
-        {0.0f, 0.0f, -1.0f}
+        {0.0f, -1.0f, 0.0f},
+        {0.0f, 0.0f, 1.0f}
     };
 
     struct Raw_data
@@ -45,7 +45,7 @@ public:
     float gyro_filter_[3], accel_filter_[3];
     bool is_first_ = true;
 
-    float filter_k_ = 0.5f;
+    float filter_k_ = 0.3f;
 
     float gyro_bias_[3] = {0.0f, 0.0f, 0.0f};
     float accel_bias_[3] = {0.0f, 0.0f, 0.0f};

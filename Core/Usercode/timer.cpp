@@ -46,6 +46,6 @@ void imu_init()
 
     imu.temp_control_.temp_control(500);
 
-    imu.gyro_calibrate(500);
+    imu.gyro_calibrate(2000);
 }
 }
