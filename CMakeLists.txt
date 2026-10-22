@@ -34,9 +34,9 @@ enable_language(C ASM)
 # Create an executable object type
 add_executable(${CMAKE_PROJECT_NAME}
         Core/Usercode/bmi088.cpp
-        Core/Usercode/imu.cpp
         Core/Usercode/timer.cpp
-        Core/Usercode/pid.cpp)
+        Core/Usercode/pid.cpp
+        Core/Usercode/IMU.cpp)
 
 # Add STM32CubeMX generated sources
 add_subdirectory(cmake/stm32cubemx)
