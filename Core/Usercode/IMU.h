@@ -10,10 +10,15 @@
 
 class IMU
 {
-    public:
-    void update(uint32_t dt_ms);
+public:
+    void update(uint32_t dt_ms); // 尝试更新
+    void dmaCallback(); // DMA 回调
+    void acc_init();
+    void gyro_init();
+    void gyro_calibrate(uint32_t time_ms); // 标定零漂
 
 
+private:
     // dma 读取相关
     enum class dma_states
     {
@@ -22,10 +27,8 @@ class IMU
         READING_GYRO,
         READING_TEMP
     } dma_state_ = dma_states::IDLE;
+
     uint32_t update_dt_ms_;
-    void dmaCallback();
-
-
 
 
     // acc 相关
@@ -36,11 +39,8 @@ class IMU
     float acc_bias_[3];
     float acc_filtered_data_[3];
 
-    void acc_init();
     void acc_read_dma();
     void acc_cal(uint8_t* data);
-
-
 
 
     // gyro 相关
@@ -51,11 +51,8 @@ class IMU
     float gyro_bias_[3];
     float gyro_filtered_data_[3];
 
-    void gyro_init();
     void gyro_read_dma();
     void gyro_cal(uint8_t* data);
-    void gyro_calibrate(uint32_t time_ms);
-
 
 
     // 数据处理
@@ -71,9 +68,9 @@ class IMU
     float q_[4] = {1.0f, 0.0f, 0.0f, 0.0f};
 
     // 姿态角
-    float roll_  = 0.0f;
+    float roll_ = 0.0f;
     float pitch_ = 0.0f;
-    float yaw_   = 0.0f;
+    float yaw_ = 0.0f;
 
     // Mahony
     float mahony_kp_ = 1.0f;
@@ -84,7 +81,6 @@ class IMU
     void data_transform();
     void data_filter();
     void attitude_update(uint32_t dt_ms);
-
 
 
     // 温控
@@ -99,10 +95,10 @@ class IMU
 
         void read_temp();
         void read_temp_block();
-        void handle();// 输出到 PWM
+        void handle(); // 输出到 PWM
         void transform_data(uint8_t* data);
         bool try_control();
-        void temp_control(uint16_t time_ms);// 初始化控温
+        void temp_control(uint16_t time_ms); // 初始化控温
 
     private:
     } temp_control_;
